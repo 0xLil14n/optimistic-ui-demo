@@ -29,7 +29,7 @@ const ToDo: React.FC<Props> = ({ toDos, listName }) => {
               name={itemName}
               id={itemName}
             />
-            <label for={itemName}>{itemName}</label>
+            <label htmlFor={itemName}>{itemName}</label>
           </div>
         ))}
       </fieldset>
