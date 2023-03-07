@@ -73,6 +73,10 @@
   max-width: 800px;
 }
 
+.toDoItem {
+  padding: 1rem;
+  text-align: left;
+}
 .card {
   margin: 1rem;
   padding: 1.5rem;
