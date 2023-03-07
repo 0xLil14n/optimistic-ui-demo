@@ -6,6 +6,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model ToDoList {
+  id String @id @default(cuid())
+  name String
+  toDos ToDo[]
+}
+
+model ToDo {
+  id String @id @default(cuid())
+  itemName String
+  isDone Boolean @default(false)
+  toDoList ToDoList @relation(fields: [listId], references: [id])
+  listId String
 }
