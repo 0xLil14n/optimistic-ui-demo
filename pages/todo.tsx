@@ -58,15 +58,19 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
 
               e.preventDefault();
               try {
-                setToDoItems([
-                  ...toDoItems,
-                  { itemName: e.target[0].value, isDone: false } as ToDo,
-                ]);
+                // setToDoItems([
+                //   ...toDoItems,
+                //   { itemName: e.target[0].value, isDone: false } as ToDo,
+                // ]);
                 await saveToDoItem({
                   itemName: e.target[0].value,
                   isDone: false,
                   toDoList: { connect: { id: '1' } },
                 });
+
+                const l = await getToDoItems();
+
+                setToDoItems(l.toDos);
                 e.target.reset();
               } catch (err) {
                 console.log(err);
@@ -108,6 +112,14 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
 
 const prisma = new PrismaClient();
 
+async function getToDoItems() {
+  const response = await fetch('/api/getListItems', {
+    method: 'GET',
+  });
+  const r = await response.json();
+  return r;
+}
+
 async function updateToDoItem(toDo: { id: string; isDone: boolean }) {
   const response = await fetch('/api/removeItem', {
     method: 'POST',
@@ -138,6 +150,7 @@ export async function getServerSideProps() {
       where: { id: list?.id },
     })
     .toDos();
+
   return {
     props: {
       toDos,
