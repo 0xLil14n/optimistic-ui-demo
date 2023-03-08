@@ -38,7 +38,7 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
                           curr.id === id
                             ? [...acc, { ...curr, isDone: !isDone }]
                             : [...acc, curr],
-                        []
+                        [] as ToDo[]
                       );
                     });
                     updateToDoItem({ id, isDone: !isDone });
