@@ -18,54 +18,102 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
   return (
     <div className={styles.main}>
       <h1 className={styles.title}>To Do List</h1>
-      <fieldset>
-        <legend>{list?.name}</legend>
-        {toDos.map(({ isDone, itemName }) => (
-          <div className={styles.toDoItem}>
-            <input
-              type="checkbox"
-              onChange={() => {}}
-              checked={isDone}
-              value={itemName}
-              name={itemName}
-              id={itemName}
-            />
-            <label htmlFor={itemName}>{itemName}</label>
-          </div>
-        ))}
-        <form
-          onSubmit={async (e: BaseSyntheticEvent) => {
-            console.log('e', e);
+      <div className={styles.content}>
+        <fieldset>
+          <legend>{list?.name}</legend>
+          {toDos
+            .filter(({ isDone }) => !isDone)
+            .map(({ id, isDone, itemName }) => (
+              <div className={styles.toDoItem}>
+                <button
+                  onClick={() => {
+                    updateToDoItem({ id, isDone: !isDone });
+                  }}
+                  type="button"
+                  className={styles.removeButton}
+                >
+                  remove
+                </button>
 
-            e.preventDefault();
-            try {
-              await saveToDoItem({
-                itemName: e.target[0].value,
-                isDone: false,
-                toDoList: { connect: { id: '1' } },
-              });
-              e.target.reset();
-            } catch (err) {
-              console.log(err);
-            }
-          }}
-        >
-          <input
-            onSubmit={(e) => {
-              console.log('asdfe', e.target);
+                <label
+                  style={{ background: `${isDone ? 'red' : 'blue'}` }}
+                  htmlFor={itemName}
+                >
+                  {itemName}
+                </label>
+              </div>
+            ))}
+          <form
+            onSubmit={async (e: BaseSyntheticEvent) => {
+              console.log('e', e);
+
               e.preventDefault();
+              try {
+                await saveToDoItem({
+                  itemName: e.target[0].value,
+                  isDone: false,
+                  toDoList: { connect: { id: '1' } },
+                });
+                e.target.reset();
+              } catch (err) {
+                console.log(err);
+              }
             }}
-            name="add to-do item"
-            placeholder="add to-do item"
-          />
-          <input type="submit" style={{ display: 'none' }} />
-        </form>
-      </fieldset>
+          >
+            <input
+              className={styles.addItem}
+              onSubmit={(e) => {
+                console.log('asdfe', e.target);
+                e.preventDefault();
+              }}
+              name="add to-do item"
+              placeholder="add to-do item"
+            />
+            <input type="submit" style={{ display: 'none' }} />
+          </form>
+        </fieldset>
+        <fieldset>
+          <legend>done</legend>
+          {toDos
+            .filter(({ isDone }) => isDone)
+            .map(({ id, isDone, itemName }) => (
+              <div className={styles.toDoItem}>
+                <button
+                  onClick={() => {
+                    updateToDoItem({ id, isDone: !isDone });
+                  }}
+                  type="button"
+                  className={styles.removeButton}
+                >
+                  remove
+                </button>
+
+                <label
+                  style={{ background: `${isDone ? 'red' : 'blue'}` }}
+                  htmlFor={itemName}
+                >
+                  {itemName}
+                </label>
+              </div>
+            ))}
+        </fieldset>
+      </div>
     </div>
   );
 };
 
 const prisma = new PrismaClient();
+
+async function updateToDoItem(toDo: { id: string; isDone: boolean }) {
+  const response = await fetch('/api/removeItem', {
+    method: 'POST',
+    body: JSON.stringify(toDo),
+  });
+  if (!response.ok) {
+    throw new Error(response.statusText);
+  }
+  return await response.json();
+}
 
 async function saveToDoItem(toDo: Omit<ToDo, 'id'>) {
   const response = await fetch('/api/todolist', {
