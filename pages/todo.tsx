@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { BaseSyntheticEvent } from 'react';
+import { BaseSyntheticEvent, useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css';
+import todolist from './api/todolist';
 
 type ToDo = {
   itemName: string;
@@ -15,18 +16,31 @@ type Props = {
 };
 
 const ToDo: React.FC<Props> = ({ toDos, list }) => {
+  const [toDoItems, setToDoItems] = useState<ToDo[]>([]);
+  useEffect(() => {
+    setToDoItems([...toDos]);
+  }, []);
   return (
     <div className={styles.main}>
       <h1 className={styles.title}>To Do List</h1>
       <div className={styles.content}>
         <fieldset>
           <legend>{list?.name}</legend>
-          {toDos
+          {toDoItems
             .filter(({ isDone }) => !isDone)
             .map(({ id, isDone, itemName }) => (
               <div className={styles.toDoItem}>
                 <button
                   onClick={() => {
+                    setToDoItems((toDoItems) => {
+                      return toDoItems.reduce(
+                        (acc, curr) =>
+                          curr.id === id
+                            ? [...acc, { ...curr, isDone: !isDone }]
+                            : [...acc, curr],
+                        [] as ToDo[]
+                      );
+                    });
                     updateToDoItem({ id, isDone: !isDone });
                   }}
                   type="button"
@@ -35,12 +49,7 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
                   remove
                 </button>
 
-                <label
-                  style={{ background: `${isDone ? 'red' : 'blue'}` }}
-                  htmlFor={itemName}
-                >
-                  {itemName}
-                </label>
+                <label htmlFor={itemName}>{itemName}</label>
               </div>
             ))}
           <form
@@ -49,11 +58,19 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
 
               e.preventDefault();
               try {
+                // setToDoItems([
+                //   ...toDoItems,
+                //   { itemName: e.target[0].value, isDone: false } as ToDo,
+                // ]);
                 await saveToDoItem({
                   itemName: e.target[0].value,
                   isDone: false,
                   toDoList: { connect: { id: '1' } },
                 });
+
+                const l = await getToDoItems();
+
+                setToDoItems(l.toDos);
                 e.target.reset();
               } catch (err) {
                 console.log(err);
@@ -62,10 +79,6 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
           >
             <input
               className={styles.addItem}
-              onSubmit={(e) => {
-                console.log('asdfe', e.target);
-                e.preventDefault();
-              }}
               name="add to-do item"
               placeholder="add to-do item"
             />
@@ -74,7 +87,7 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
         </fieldset>
         <fieldset>
           <legend>done</legend>
-          {toDos
+          {toDoItems
             .filter(({ isDone }) => isDone)
             .map(({ id, isDone, itemName }) => (
               <div className={styles.toDoItem}>
@@ -88,12 +101,7 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
                   remove
                 </button>
 
-                <label
-                  style={{ background: `${isDone ? 'red' : 'blue'}` }}
-                  htmlFor={itemName}
-                >
-                  {itemName}
-                </label>
+                <label htmlFor={itemName}>{itemName}</label>
               </div>
             ))}
         </fieldset>
@@ -103,6 +111,14 @@ const ToDo: React.FC<Props> = ({ toDos, list }) => {
 };
 
 const prisma = new PrismaClient();
+
+async function getToDoItems() {
+  const response = await fetch('/api/getListItems', {
+    method: 'GET',
+  });
+  const r = await response.json();
+  return r;
+}
 
 async function updateToDoItem(toDo: { id: string; isDone: boolean }) {
   const response = await fetch('/api/removeItem', {
@@ -134,6 +150,7 @@ export async function getServerSideProps() {
       where: { id: list?.id },
     })
     .toDos();
+
   return {
     props: {
       toDos,
